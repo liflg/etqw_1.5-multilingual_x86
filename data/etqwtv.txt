@@ -1,0 +1,105 @@
+========================================
+SETTING UP AND RUNNING AN ETQW:TV SERVER
+========================================
+
+An Overview: What is ETQW:TV?
+========================================
+
+ETQW:TV is primarily aimed at competition gaming, where large audiences might want to watch high-profile matches without having to set up bandwidth-intensive and fixed-perspective video streaming.
+
+ETQW:TV essentially allows a server to host extra spectator slots, but without having any performance impact on the main server. This is achieved by running a so-called repeater that then streams data to spectator clients connected to it. You can also set up relay servers that increase the number of spectators that can watch a match. By stringing several relays together, ETQW:TV can be used to broadcast matches to hundreds of spectators, who can all follow the match as if they were on the main server.
+
+ETQW:TV also allows the feed operator to set up a deliberate broadcasting delay to prevent spectators from relaying information back to the players.
+
+
+Getting Started
+========================================
+
+To spectate a server using ETQW:TV, the server must be running a repeater itself. If this is your own server, this is simply a matter of setting the cvar "net_spawnRepeater" to "1" before starting up the server.
+
+Running a repeater relay server is equally simple: Just set the cvar "net_spawnRepeater" to "1", and then type "connect <server>" on the server console, where <server> is the main server you are wanting to broadcast via the relay. Please note that the main server must be running a repeater, as repeater relays can only be connected to other repeaters. If the server you are trying to connect the relay to is not running a repeater, you will get a warning on the relay's console.
+
+Repeater servers spawn by default on port 27833. If that port is unavailable, the game will try to use the next 3 consecutive ports. You can also specify a port to use by setting the "net_repeaterPort" cvar.
+
+Read the next two sections to configure the repeater's client controls.
+
+
+Client Management
+========================================
+
+Repeater and relay servers may host any number of clients, as long as you have sufficient hardware to support it.
+
+To control the maximum number of clients that may connect to the server, you can set the "ri_maxViewers" cvar to whatever number of clients you wish to allow. This cvar can be modified whilst the server is running to allow more or less viewers. There is no limit on this cvar, but it is not recommended to set it to values greater than 256.
+
+
+Passwords
+========================================
+
+There are three different passwords that can be set up on your repeater to control access to it. This applies to both the main repeater, and repeater relays.
+
+In all cases, connecting clients or relays must set the "password" cvar to the value of the appropriate password.
+
+g_viewerPassword
+This will stop viewer clients from connecting to the server unless they provide the appropriate password, and will not affect repeater relays connecting to the server. To enable this, simply set "g_viewerPassword" to your desired password and set "ri_useViewerPass"to "1". 
+
+g_repeaterPassword
+This will prevent repeater relays from connecting to the server unless they provide the appropriate password and will not affect viewer clients connecting to the server. Setting the password works the same as for g_viewerPassword. No additional cvars need to be set to enable this password.
+
+g_privateViewerPassword
+This can be used to allow clients or relays access even if the viewer limit has been reached. To control the regular viewer limit count, you can adjust "ri_maxViewers", and "ri_privateViewers". The server will be considered full for connecting clients and relays when ( max - private ) slots are in use. Clients and relays connecting to the server with the private password will consider it full if ( max ) slots are in use.
+
+An example:
+
+A server has "ri_maxViewers" set to 24, and "ri_privateViewers" set to 16. In this case, once there are ( max ( 24 ) - private ( 16 ) ) = 8 slots in use, clients or relays connecting without the private password will see the server as being full, while clients and relays with the private password will be able to connect until all 24 slots are taken up.
+
+
+Communication
+========================================
+
+Clients on a repeater may talk to other clients connected to the same repeater, but not to those on the main server, nor those on any other repeater in the chain, though they will be able to see global chat from the main server. Each viewer client's text will show their viewer index after their name, which can be used to kick abusive clients.
+
+You can disable clients being able to talk on the repeater by setting "g_noTVChat" to 1.
+
+
+Admining
+========================================
+
+You may list all clients on the repeater from the server console, or via rcon by using the "listRepeaterClients" command. This will display their index and ip, and name if they are a client.
+
+Clients may be kicked from the repeater either from the server console or via rcon by using the "kickRepeaterClient" command along with the index of the client to remove.
+
+
+Delayed playback
+========================================
+
+You can enable delayed playback on repeater relays by setting the "net_clientRepeaterDelay" cvar. This value is the number of minutes to store data for before passing it on. This value must be set before the relay is connected to a server, and only applies to relays - it will have no effect on the main repeater server. Fractional values are allowed, so you may use 0.5 for 30 seconds.
+
+In this mode, the server needs to store enough data for the playback period, so clients connecting to the server whilst it is gathering data will see the loading screen until this is finished. This also means that the server will use additional memory to store this data, so this should be taken into consideration when choosing how much of a delay you want to apply.
+
+
+Bandwidth
+========================================
+
+The bandwidth requirements for a viewer client connected to a repeater are similar to those of a player connected to a normal server. By default, clients connected to a repeater will be sent snapshots every 3 frames, which is the same as regular clients. This can be adjusted by changing the "net_repeaterSnapshotDelay" cvar.
+
+A relay connected to a repeater requires a much greater amount of bandwidth, mainly because repeaters need to be sent data about all entities and all players in order to be able to forward this data on to other viewers connected to them. In addition, repeaters are sent snapshots every frame by default, instead of every 3 frames. This can be adjusted by changing the "net_repeaterRelaySnapshotDelay" cvar. Repeaters also have a higher default rate limit as a result of this, controlled by the "net_serverMaxRepeaterRate" cvar.
+
+
+Client controls
+========================================
+
+As a client, you can spectate players on the server by double clicking their name in the Limbo Menu's player list. You can also cycle through all clients on the main server (including spectators) by pressing your attack key (left mouse button by default), and you can switch to free camera mode by pressing your alt attack key (right mouse button by default).
+
+The speed of the camera can be controlled by changing the "pm_demoCamSpeed" cvar. You can also choose to spectate a specific client index or name by using the "setSpectateClient" console command.
+
+
+VoIP
+========================================
+
+There is currently no support for VoIP over repeaters.
+
+
+Mods & Maps
+========================================
+
+The repeater can be set up to auto-download additional content by setting the "net_clientRepeaterAutoDownload" cvar to "1".

@@ -1,0 +1,89 @@
+
+
+// *************************************************************************
+// NOTE: MAKE SURE TO SET YOUR PASSWORD BELOW
+// If the password is not set, you will not be able to log in
+// *************************************************************************
+
+// *************************************************************************
+// NOTE: The server must be fully restarted for changes to take effect
+// *************************************************************************
+
+
+// Players may only log into a group with a password
+
+// votelevel controls the type of votes that each user group can call
+// these levels are setup in the "votes" block at the end of this file
+
+// *************************************************************************
+// NOTE: Negative values for voteLevel are not currently supported
+// The default vote level is 0
+// *************************************************************************
+
+group Default {
+//	This controls which votes a player within this group may issue
+//	voteLevel	1
+}
+
+group Trusted {
+//	This controls which votes a player within this group may issue
+//	voteLevel	2
+}
+
+group Admin {
+//	password	PASSWORD
+	
+	// This sets which groups people in this group may move other people into
+	control {
+		Admin
+		Trusted
+		Default
+	}
+	
+	// these control the actions that can be carried out by this group
+	adminKick
+	adminBan
+	adminSetTeam
+	adminChangeCampaign
+	adminChangeMap
+	adminGlobalMute
+	adminGlobalVOIPMute
+	adminPlayerMute
+	adminPlayerVOIPMute
+	adminWarn
+	adminRestartMap
+	adminRestartCampaign
+	adminStartMatch
+	adminExecConfig
+	adminShuffleTeams
+	adminAddBot
+	adminDisableProficiency
+	adminSetTimeLimit
+	adminSetTeamDamage
+	adminSetTeamBalance
+	adminAdjustBots
+	
+	// these control what other groups may not do to users in this group
+	noBan
+	noKick
+	noMute
+	noWarn
+
+// This controls which votes a player within this group may issue
+//	voteLevel	5
+}
+
+// This controls any configs which you may allow players to exec
+// they must be placed in the game's base/ folder
+configs {
+	"Match"			"match.cfg"
+	"Public"		"public.cfg"
+}
+
+// typing "listvotes" in the game console will list all existing votes and their vote level
+/*
+votes {
+	"maprestart"	"2"
+	"campaignreset"	"2"
+}
+*/

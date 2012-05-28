@@ -1,0 +1,284 @@
+diff -r -u SDL-1.2.12/configure.in SDL-1.2.12.id/configure.in
+--- SDL-1.2.12/configure.in	2007-07-20 03:32:39.000000000 -0500
++++ SDL-1.2.12.id/configure.in	2007-12-19 12:18:07.000000000 -0600
+@@ -29,7 +29,7 @@
+ AC_SUBST(SDL_VERSION)
+ 
+ # libtool versioning
+-LT_RELEASE=$SDL_MAJOR_VERSION.$SDL_MINOR_VERSION
++LT_RELEASE=$SDL_MAJOR_VERSION.$SDL_MINOR_VERSION.id
+ LT_CURRENT=`expr $SDL_MICRO_VERSION - $SDL_INTERFACE_AGE`
+ LT_REVISION=$SDL_INTERFACE_AGE
+ LT_AGE=`expr $SDL_BINARY_AGE - $SDL_INTERFACE_AGE`
+diff -r -u SDL-1.2.12/include/SDL_video.h SDL-1.2.12.id/include/SDL_video.h
+--- SDL-1.2.12/include/SDL_video.h	2007-07-20 00:52:44.000000000 -0500
++++ SDL-1.2.12.id/include/SDL_video.h	2007-12-19 12:18:07.000000000 -0600
+@@ -819,6 +819,11 @@
+ extern DECLSPEC void SDLCALL SDL_GL_Lock(void);
+ extern DECLSPEC void SDLCALL SDL_GL_Unlock(void);
+ 
++                    
++extern DECLSPEC void SDLCALL SDL_GL_DisableContext(void);	/* DAJ ENABLE_INTEL_SMP */
++extern DECLSPEC void SDLCALL SDL_GL_EnableContext_Thread(void);	/* DAJ ENABLE_INTEL_SMP */
++
++
+ /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ /* These functions allow interaction with the window manager, if any.        */
+ /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+@@ -881,7 +886,7 @@
+ /* Not in public API at the moment - do not use! */
+ extern DECLSPEC int SDLCALL SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect,
+                                     SDL_Surface *dst, SDL_Rect *dstrect);
+-                    
++
+ /* Ends C function definitions when using C++ */
+ #ifdef __cplusplus
+ }
+Only in SDL-1.2.12.id/include: SDL_video.h.orig
+diff -r -u SDL-1.2.12/src/SDL.c SDL-1.2.12.id/src/SDL.c
+--- SDL-1.2.12/src/SDL.c	2007-07-20 00:52:27.000000000 -0500
++++ SDL-1.2.12.id/src/SDL.c	2007-12-19 12:18:07.000000000 -0600
+@@ -248,6 +248,7 @@
+ 
+ }
+ 
++
+ /* Return the library version number */
+ const SDL_version * SDL_Linked_Version(void)
+ {
+Only in SDL-1.2.12.id/src: SDL.c.orig
+diff -r -u SDL-1.2.12/src/events/SDL_keyboard.c SDL-1.2.12.id/src/events/SDL_keyboard.c
+--- SDL-1.2.12/src/events/SDL_keyboard.c	2007-07-20 00:52:11.000000000 -0500
++++ SDL-1.2.12.id/src/events/SDL_keyboard.c	2007-12-19 12:18:07.000000000 -0600
+@@ -393,17 +393,27 @@
+ 			case SDLK_UNKNOWN:
+ 				break;
+ 			case SDLK_NUMLOCK:
++#ifdef MACOSX /* michael, we want numlock/clear to behave like a normal key */
++				modstate |= KMOD_NUM;
++				break;
++#else
+ 				modstate ^= KMOD_NUM;
+ 				if ( ! (modstate&KMOD_NUM) )
+ 					state = SDL_RELEASED;
+ 				keysym->mod = (SDLMod)modstate;
+ 				break;
++#endif
+ 			case SDLK_CAPSLOCK:
++#ifdef MACOSX /* michael, we want capslock to behave like a normal key */
++				modstate |= KMOD_CAPS;
++				break;
++#else
+ 				modstate ^= KMOD_CAPS;
+ 				if ( ! (modstate&KMOD_CAPS) )
+ 					state = SDL_RELEASED;
+ 				keysym->mod = (SDLMod)modstate;
+ 				break;
++#endif
+ 			case SDLK_LCTRL:
+ 				modstate |= KMOD_LCTRL;
+ 				break;
+@@ -439,10 +449,12 @@
+ 		switch (keysym->sym) {
+ 			case SDLK_UNKNOWN:
+ 				break;
++#ifdef MACOSX /* we want numlock/clear/capslock to behave like a normal key. Non-toggle */
+ 			case SDLK_NUMLOCK:
+ 			case SDLK_CAPSLOCK:
+ 				/* Only send keydown events */
+ 				return(0);
++#endif
+ 			case SDLK_LCTRL:
+ 				modstate &= ~KMOD_LCTRL;
+ 				break;
+diff -r -u SDL-1.2.12/src/video/SDL_sysvideo.h SDL-1.2.12.id/src/video/SDL_sysvideo.h
+--- SDL-1.2.12/src/video/SDL_sysvideo.h	2007-07-20 00:52:25.000000000 -0500
++++ SDL-1.2.12.id/src/video/SDL_sysvideo.h	2007-12-19 12:18:07.000000000 -0600
+@@ -179,6 +179,12 @@
+ 	/* Make the context associated with this driver current */
+ 	int (*GL_MakeCurrent)(_THIS);
+ 
++	/* Make the context current to the calling thread */
++	int (*GL_MakeCurrent_Thread)(_THIS);
++
++	/* Swap the current context. */
++	int (*GL_DisableContext)(_THIS);
++
+ 	/* Swap the current buffers in double buffer mode. */
+ 	void (*GL_SwapBuffers)(_THIS);
+ 
+diff -r -u SDL-1.2.12/src/video/SDL_video.c SDL-1.2.12.id/src/video/SDL_video.c
+--- SDL-1.2.12/src/video/SDL_video.c	2007-07-20 00:52:25.000000000 -0500
++++ SDL-1.2.12.id/src/video/SDL_video.c	2007-12-19 12:18:07.000000000 -0600
+@@ -1667,6 +1667,22 @@
+ #endif
+ }
+ 
++void SDL_GL_DisableContext()	/*DAJ ENABLE_INTEL_SMP*/
++{
++	SDL_VideoDevice *this = current_video;
++	
++	this->GL_DisableContext( this );
++}
++
++void SDL_GL_EnableContext_Thread() {
++	SDL_VideoDevice *this = current_video;
++#ifdef MACOSX
++	this->GL_MakeCurrent( this );
++#else
++	this->GL_MakeCurrent_Thread( this );
++#endif
++}
++
+ /*
+  * Sets/Gets the title and icon text of the display window, if any.
+  */
+Only in SDL-1.2.12.id/src/video: SDL_video.c.orig
+diff -r -u SDL-1.2.12/src/video/maccommon/SDL_macgl.c SDL-1.2.12.id/src/video/maccommon/SDL_macgl.c
+--- SDL-1.2.12/src/video/maccommon/SDL_macgl.c	2007-07-20 00:52:18.000000000 -0500
++++ SDL-1.2.12.id/src/video/maccommon/SDL_macgl.c	2007-12-19 12:18:07.000000000 -0600
+@@ -101,6 +101,7 @@
+ 	}
+ 
+ 	attributes[i++] = AGL_ALL_RENDERERS;
++	attributes[i++] = AGL_MP_SAFE; /*DAJ ENABLE_INTEL_SMP*/
+ 	attributes[i]	= AGL_NONE;
+ 
+ 	format = aglChoosePixelFormat(NULL, 0, attributes);
+@@ -114,6 +115,7 @@
+ 		SDL_SetError("Couldn't create OpenGL context");
+ 		return(-1);
+ 	}
++	
+ 	aglDestroyPixelFormat(format);
+ 
+     #if  TARGET_API_MAC_CARBON
+diff -r -u SDL-1.2.12/src/video/quartz/SDL_QuartzGL.m SDL-1.2.12.id/src/video/quartz/SDL_QuartzGL.m
+--- SDL-1.2.12/src/video/quartz/SDL_QuartzGL.m	2007-07-20 00:52:17.000000000 -0500
++++ SDL-1.2.12.id/src/video/quartz/SDL_QuartzGL.m	2007-12-19 12:18:07.000000000 -0600
+@@ -118,6 +118,7 @@
+ 
+     attr[i++] = NSOpenGLPFAScreenMask;
+     attr[i++] = CGDisplayIDToOpenGLDisplayMask (display_id);
++    attr[i++] = NSOpenGLPFAMPSafe;		/*DAJ ENABLE_INTEL_SMP*/
+     attr[i] = 0;
+ 
+     fmt = [ [ NSOpenGLPixelFormat alloc ] initWithAttributes:attr ];
+@@ -168,8 +169,8 @@
+         CGLContextObj ctx = [ gl_context cglContext ];
+         CGLSetParameter (ctx, GLI_SUBMIT_FUNC_CACHE_MAX, &cache_max);
+         CGLSetParameter (ctx, GLI_ARRAY_FUNC_CACHE_MAX, &cache_max);
+-    }
+-
++	}
++	
+     /* End Wisdom from Apple Engineer section. --ryan. */
+ 
+     return 1;
+@@ -276,6 +277,11 @@
+     return 0;
+ }
+ 
++int    QZ_GL_DisableContext   (_THIS) {	/*DAJ ENABLE_INTEL_SMP*/
++	[ NULL makeCurrentContext ];
++    return 0;
++}
++
+ void   QZ_GL_SwapBuffers    (_THIS) {
+     [ gl_context flushBuffer ];
+ }
+diff -r -u SDL-1.2.12/src/video/quartz/SDL_QuartzVideo.h SDL-1.2.12.id/src/video/quartz/SDL_QuartzVideo.h
+--- SDL-1.2.12/src/video/quartz/SDL_QuartzVideo.h	2007-07-20 00:52:17.000000000 -0500
++++ SDL-1.2.12.id/src/video/quartz/SDL_QuartzVideo.h	2007-12-19 12:18:07.000000000 -0600
+@@ -191,6 +191,7 @@
+ void*  QZ_GL_GetProcAddress (_THIS, const char *proc);
+ int    QZ_GL_GetAttribute   (_THIS, SDL_GLattr attrib, int* value);
+ int    QZ_GL_MakeCurrent    (_THIS);
++int    QZ_GL_DisableContext (_THIS);	/*DAJ ENABLE_INTEL_SMP*/
+ void   QZ_GL_SwapBuffers    (_THIS);
+ int    QZ_GL_LoadLibrary    (_THIS, const char *location);
+ 
+Only in SDL-1.2.12.id/src/video/quartz: SDL_QuartzVideo.h.orig
+diff -r -u SDL-1.2.12/src/video/quartz/SDL_QuartzVideo.m SDL-1.2.12.id/src/video/quartz/SDL_QuartzVideo.m
+--- SDL-1.2.12/src/video/quartz/SDL_QuartzVideo.m	2007-07-20 00:52:17.000000000 -0500
++++ SDL-1.2.12.id/src/video/quartz/SDL_QuartzVideo.m	2007-12-19 12:18:07.000000000 -0600
+@@ -136,6 +136,7 @@
+     device->GL_GetProcAddress = QZ_GL_GetProcAddress;
+     device->GL_GetAttribute   = QZ_GL_GetAttribute;
+     device->GL_MakeCurrent    = QZ_GL_MakeCurrent;
++	device->GL_DisableContext = QZ_GL_DisableContext;
+     device->GL_SwapBuffers    = QZ_GL_SwapBuffers;
+     device->GL_LoadLibrary    = QZ_GL_LoadLibrary;
+ 
+@@ -167,6 +168,7 @@
+     SDL_free (device);
+ }
+ 
++
+ static int QZ_VideoInit (_THIS, SDL_PixelFormat *video_format) {
+ 
+     NSRect r = NSMakeRect(0.0, 0.0, 0.0, 0.0);
+Only in SDL-1.2.12.id/src/video/quartz: SDL_QuartzVideo.m.orig
+diff -r -u SDL-1.2.12/src/video/x11/SDL_x11gl.c SDL-1.2.12.id/src/video/x11/SDL_x11gl.c
+--- SDL-1.2.12/src/video/x11/SDL_x11gl.c	2007-07-20 00:52:25.000000000 -0500
++++ SDL-1.2.12.id/src/video/x11/SDL_x11gl.c	2007-12-19 12:18:07.000000000 -0600
+@@ -335,6 +335,33 @@
+ 	return(retval);
+ }
+ 
++/* id: Make the current context active to the calling thread. */
++int X11_GL_MakeCurrent_Thread(_THIS)
++{
++	int retval;
++	
++	retval = 0;
++	if ( ! this->gl_data->glXMakeCurrent(GFX_Display,
++	                                     SDL_Window, glx_context) ) {
++		SDL_SetError("Unable to make GL context current");
++		retval = -1;
++	}
++	return retval;
++}
++
++/* Disable the context */
++int X11_GL_DisableContext(_THIS)
++{
++	int retval;
++
++	retval = 0;
++	if ( !this->gl_data->glXMakeCurrent( GFX_Display, None, NULL ) ) {
++		SDL_SetError( "Unable to disable GL context" );
++		retval = -1;
++	}
++	return(retval);
++}
++
+ /* Get attribute data from glX. */
+ int X11_GL_GetAttribute(_THIS, SDL_GLattr attrib, int* value)
+ {
+Only in SDL-1.2.12.id/src/video/x11: SDL_x11gl.c.orig
+diff -r -u SDL-1.2.12/src/video/x11/SDL_x11gl_c.h SDL-1.2.12.id/src/video/x11/SDL_x11gl_c.h
+--- SDL-1.2.12/src/video/x11/SDL_x11gl_c.h	2007-07-20 00:52:25.000000000 -0500
++++ SDL-1.2.12.id/src/video/x11/SDL_x11gl_c.h	2007-12-19 12:18:07.000000000 -0600
+@@ -90,6 +90,8 @@
+ extern void X11_GL_Shutdown(_THIS);
+ #if SDL_VIDEO_OPENGL_GLX
+ extern int X11_GL_MakeCurrent(_THIS);
++extern int X11_GL_MakeCurrent_Thread(_THIS);
++extern int X11_GL_DisableContext(_THIS);
+ extern int X11_GL_GetAttribute(_THIS, SDL_GLattr attrib, int* value);
+ extern void X11_GL_SwapBuffers(_THIS);
+ extern int X11_GL_LoadLibrary(_THIS, const char* path);
+diff -r -u SDL-1.2.12/src/video/x11/SDL_x11video.c SDL-1.2.12.id/src/video/x11/SDL_x11video.c
+--- SDL-1.2.12/src/video/x11/SDL_x11video.c	2007-07-20 00:52:25.000000000 -0500
++++ SDL-1.2.12.id/src/video/x11/SDL_x11video.c	2007-12-19 12:18:07.000000000 -0600
+@@ -156,6 +156,8 @@
+ 		device->GL_GetProcAddress = X11_GL_GetProcAddress;
+ 		device->GL_GetAttribute = X11_GL_GetAttribute;
+ 		device->GL_MakeCurrent = X11_GL_MakeCurrent;
++		device->GL_DisableContext = X11_GL_DisableContext;
++		device->GL_MakeCurrent_Thread = X11_GL_MakeCurrent_Thread;
+ 		device->GL_SwapBuffers = X11_GL_SwapBuffers;
+ #endif
+ 		device->SetCaption = X11_SetCaption;
+Only in SDL-1.2.12.id/src/video/x11: SDL_x11video.c.orig

@@ -1,0 +1,28 @@
+--------------------------
+COPYRIGHT INFORMATION
+--------------------------
+
+Earth imagery courtesy of NASA and the Visible Earth Project (http://visibleearth.nasa.gov)
+
+id Software, Inc. and Activision(R) makes no guarantees regarding the availability of online play and may withdraw online service in its discretion without notice.
+
+ET:QW incorporates technology of Massive Incorporated ("Massive") that enables certain in-game objects (e.g. advertising) to be temporarily uploaded to your personal computer or game console and placed in-game while connected online.  As part of that process, no personally identifiable information about you is collected and only select non-personally identifiable information is temporarily logged.  No logged information is used to determine any personally identifiable information about you.  For additional details see Massive's privacy policy at http://www.massiveincorporated.com/privacy.htm
+
+Uses Bink Video. Copyright (C) 1997-2006 by RAD Game Tools, Inc.
+
+Uses Boost Software Copyright (c) Boost Software License - Version 1.0 - August 17th, 2003
+The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, title and non-infringement. In no event shall the copyright holders or anyone distributing the software be liable for any damages or other liability, whether in contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+
+Uses LibVorbis/ LibOgg/ LibTheora Copyright (c) 2002-2004 Xiph.org Foundation
+This software is provided by the copyright holders and contributors "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for particular purpose are disclaimed.  In no event shall the foundation or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
+
+Uses LibSpeex Copyright: 2002-2005  Xiph.org Foundation Jean-Marc Valin, David Rowe, EpicGames, Analog Devices
+This software is provided by the copyright holders and contributors "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed.  In no event shall the foundation or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
+
+Uses LibJPEG: Copyright (C) 1991-1998, Thomas G. Lane. All Rights Reserved.
+The authors make NO WARRANTY or representation, either express or implied, with respect to this software, its quality, accuracy, merchantability, or fitness for a particular purpose. This software is provided "AS IS", and you, its user, assume the entire risk as to its quality and accuracy.
+
+Uses cURL: Copyright (c) 1996 - 2004, Daniel Stenberg, <daniel@haxx.se>. All rights reserved.
+The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and no infringement of third party rights. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+
+Uses FreeType Portions of this software are copyright 2002 The FreeType Project (www.freetype.org). All rights reserved
